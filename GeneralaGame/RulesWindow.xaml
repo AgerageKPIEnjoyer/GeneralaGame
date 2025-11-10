@@ -1,0 +1,45 @@
+﻿<Window x:Class="GeneralaGame.RulesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GeneralaGame"
+        mc:Ignorable="d"
+        Title="Правила гри Generala" 
+        Height="450" Width="600"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="ToolWindow">
+
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <TextBlock TextWrapping="Wrap" FontSize="14">
+                1. Мета гри - набрати якомога більше очок за 10 раундів.
+                <LineBreak/><LineBreak/>
+                2. У кожному раунді у вас є 3 кидки (Rolls).
+                <LineBreak/><LineBreak/>
+                3. Після першого кидка ви можете "заблокувати" будь-яку 
+                   кількість кубиків, натиснувши на них.
+                <LineBreak/><LineBreak/>
+                4. Наступні кидки будуть стосуватися лише незаблокованих 
+                   кубиків.
+                <LineBreak/><LineBreak/>
+                5. Після трьох кидків (або раніше) ви повинні обрати одну 
+                   з категорій у таблиці, щоб записати туди свій результат.
+                <LineBreak/><LineBreak/>
+                6. Кожну категорію можна використати лише ОДИН РАЗ за гру.
+            </TextBlock>
+        </ScrollViewer>
+
+        <Button Grid.Row="1" Content="Зрозуміло" 
+                Width="120" Padding="8,5" 
+                Margin="0,15,0,0" 
+                HorizontalAlignment="Center"
+                Click="CloseButton_Click"/>
+    </Grid>
+</Window>
