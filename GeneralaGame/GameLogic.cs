@@ -126,27 +126,15 @@ namespace GeneralaGame
                 for (int k = 0; k < MONTE_CARLO_ROLL_ITERATIONS; k++)
                 {
                     List<int> finalSimDice = new List<int>(diceToHold);
-
                     for (int r = 0; r < diceToRollCount; r++)
                     {
                         finalSimDice.Add(_simRandom.Next(1, 7));
                     }
 
-                    // --- ▼▼▼ ОПТИМІЗАЦІЯ ("ЖАДІБНА" ОЦІНКА) ▼▼▼ ---
-                    // "Який МАКСИМАЛЬНИЙ РАХУНОК я можу отримати
-                    // з цього кидка ПРЯМО ЗАРАЗ?"
-                    int maxPossibleScore = 0;
-                    var available = currentBoard.Where(e => !e.ComputerFinalScore.HasValue && e.CategoryName != "Total Score");
-                    foreach (var entry in available)
-                    {
-                        int score = CalculateScoreForEntry(entry.CategoryName, finalSimDice, false);
-                        if (score > maxPossibleScore)
-                        {
-                            maxPossibleScore = score;
-                        }
-                    }
-                    totalSimScore += maxPossibleScore;
-                    // --- ▲▲▲ КІНЕЦЬ ОПТИМІЗАЦІЇ ▲▲▲ ---
+                    // --- ▼▼▼ ЗМІНА ▼▼▼ ---
+                    // "Жадібна" логіка винесена у новий метод
+                    totalSimScore += FindBestGreedyScore(finalSimDice, currentBoard, false);
+                    // --- ▲▲▲ КІНЕЦЬ ЗМІНИ ▲▲▲ ---
                 }
 
                 double averageScore = totalSimScore / MONTE_CARLO_ROLL_ITERATIONS;
@@ -210,29 +198,26 @@ namespace GeneralaGame
 
         private static int SimulateGameToEnd(ObservableCollection<ScoreEntry> board, int startRound)
         {
-            // Граємо, доки не закінчаться раунди
             for (int round = startRound; round <= 10; round++)
             {
-                // 1. Кидаємо кубики (лише 1 раз для швидкості симуляції)
+                // 1. Кидаємо кубики
                 List<int> simDice = new List<int>();
                 for (int i = 0; i < 5; i++) simDice.Add(_simRandom.Next(1, 7));
 
                 // 2. "Жадібно" обираємо найкращий хід з вільних
-                int maxScore = -1;
-                ScoreEntry bestSimEntry = null;
-
                 var available = board.Where(e => !e.ComputerFinalScore.HasValue && e.CategoryName != "Total Score");
-                if (!available.Any()) break; // Раунди є, а ходів немає (рідкісний випадок)
+                if (!available.Any()) break;
 
-                foreach (var entry in available)
-                {
-                    int score = CalculateScoreForEntry(entry.CategoryName, simDice, true); // (isFirstRoll=true для простоти)
-                    if (score > maxScore)
-                    {
-                        maxScore = score;
-                        bestSimEntry = entry;
-                    }
-                }
+                // --- ▼▼▼ ЗМІНА ▼▼▼ ---
+                // Використовуємо новий хелпер
+                int maxScore = FindBestGreedyScore(simDice, board, true);
+
+                // Знаходимо комірку, яка дає цей рахунок
+                // (це не ідеально, але для симуляції достатньо)
+                var bestSimEntry = available.FirstOrDefault(e => CalculateScoreForEntry(e.CategoryName, simDice, true) == maxScore);
+                if (bestSimEntry == null) // Якщо всі дають 0, беремо першу вільну
+                    bestSimEntry = available.First();
+                // --- ▲▲▲ КІНЕЦЬ ЗМІНИ ▲▲▲ ---
 
                 // 3. Записуємо його
                 bestSimEntry.ComputerFinalScore = maxScore;
@@ -242,6 +227,22 @@ namespace GeneralaGame
             int total = board.Where(e => e.CategoryName != "Total Score").Sum(e => e.ComputerFinalScore ?? 0);
             return total;
         }
+
+        private static int FindBestGreedyScore(List<int> dice, ObservableCollection<ScoreEntry> board, bool isFirstRoll)
+        {
+            int maxPossibleScore = 0;
+            var available = board.Where(e => !e.ComputerFinalScore.HasValue && e.CategoryName != "Total Score");
+            foreach (var entry in available)
+            {
+                int score = CalculateScoreForEntry(entry.CategoryName, dice, isFirstRoll);
+                if (score > maxPossibleScore)
+                {
+                    maxPossibleScore = score;
+                }
+            }
+            return maxPossibleScore;
+        }
+
         public static int CalculateScoreForEntry(string categoryName, List<int> dice, bool isFirstRoll)
         {
             switch (categoryName)

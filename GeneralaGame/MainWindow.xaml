@@ -8,7 +8,6 @@
         Title="MainWindow" Height="720" Width="1280"
         WindowState="Maximized" ResizeMode="NoResize" WindowStyle="None">
     <Window.Resources>
-
         <Style x:Key="DiceButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -19,6 +18,44 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <Style x:Key="ScoreButtonStyle" TargetType="Button">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Background" Value="#FF004D40"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="LightGray"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="HumanScoreButtonStyle" TargetType="Button" BasedOn="{StaticResource ScoreButtonStyle}">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FF00695C"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ComputerScoreButtonStyle" TargetType="Button" BasedOn="{StaticResource ScoreButtonStyle}">
+            <Setter Property="Cursor" Value="Arrow"/>
         </Style>
 
     </Window.Resources>
@@ -184,83 +221,18 @@
 
                                         <Border Grid.Column="1" BorderBrush="#99CFFF" BorderThickness="0,0,1,1" Padding="0">
                                             <Button                                                
-                                                BorderThickness="0"
-                                                Foreground="White"
-                                                FontWeight="Bold"
-                                                HorizontalContentAlignment="Center"
-                                                VerticalContentAlignment="Center"
-                                                Padding="5"
+                                                Style="{StaticResource HumanScoreButtonStyle}"
                                                 Click="ScoreButton_Click"
                                                 Content="{Binding HumanDisplayScore}"
-                                                IsEnabled="{Binding IsHumanScorable}">
-
-                                                <Button.Style>
-                                                    <Style TargetType="Button">
-                                                        <Setter Property="Background" Value="#FF004D40"/>
-                                                        <Setter Property="Cursor" Value="Hand"/>
-                                                        <Setter Property="Template">
-                                                            <Setter.Value>
-                                                                <ControlTemplate TargetType="Button">
-                                                                    <Border Background="{TemplateBinding Background}" CornerRadius="3">
-                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                    </Border>
-                                                                </ControlTemplate>
-                                                            </Setter.Value>
-                                                        </Setter>
-
-                                                        <Style.Triggers>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="#FF00695C"/>
-                                                            </Trigger>
-
-                                                            <Trigger Property="IsEnabled" Value="False">
-                                                                <Setter Property="Background" Value="Transparent"/>
-                                                                <Setter Property="Foreground" Value="LightGray"/>
-                                                                <Setter Property="Cursor" Value="Arrow"/>
-                                                            </Trigger>
-
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Button.Style>
-                                            </Button>
+                                                IsEnabled="{Binding IsHumanScorable}"/>                                              
                                         </Border>
 
                                         <Border Grid.Column="2" BorderBrush="#99CFFF" BorderThickness="0,0,0,1" Padding="0">
                                             <Button                                                
-                                                BorderThickness="0"
-                                                Foreground="White"
-                                                FontWeight="Bold"
-                                                HorizontalContentAlignment="Center"
-                                                VerticalContentAlignment="Center"
-                                                Padding="5"
+                                                Style="{StaticResource ComputerScoreButtonStyle}"
                                                 Focusable="False" 
                                                 Content="{Binding ComputerDisplayScore}"
-                                                IsEnabled="{Binding IsComputerScorable}">
-
-                                                <Button.Style>
-                                                    <Style TargetType="Button">
-                                                        <Setter Property="Background" Value="#FF004D40"/>
-                                                        <Setter Property="Cursor" Value="Arrow"/>
-                                                        <Setter Property="Template">
-                                                            <Setter.Value>
-                                                                <ControlTemplate TargetType="Button">
-                                                                    <Border Background="{TemplateBinding Background}" CornerRadius="3">
-                                                                        <ContentPresenter HorizontalAlignment="Center" 
-                                                                            VerticalAlignment="Center"/>
-                                                                    </Border>
-                                                                </ControlTemplate>
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                        <Style.Triggers>
-                                                            <Trigger Property="IsEnabled" Value="False">
-                                                                <Setter Property="Background" Value="Transparent"/>
-                                                                <Setter Property="Foreground" Value="LightGray"/>
-                                                                <Setter Property="Cursor" Value="Arrow"/>
-                                                            </Trigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Button.Style>
-                                            </Button>
+                                                IsEnabled="{Binding IsComputerScorable}"/>      
                                         </Border>
                                     </Grid>
                                 </DataTemplate>

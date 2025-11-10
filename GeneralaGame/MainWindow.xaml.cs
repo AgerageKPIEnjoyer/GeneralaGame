@@ -247,176 +247,44 @@ namespace GeneralaGame
 
         private async Task EndTurn()
         {
-            foreach (var die in Dice)
-            {
-                die.IsLocked = false;
-            }
-
-            // 1. Викликаємо новий метод, щоб вимкнути всі зелені кнопки           
-            SetScoringState(false);
-
-            // 2. Очищуємо всі потенційні очки ("0") з комірок,
-            //    щоб таблиця була чистою для ходу комп'ютера
-            foreach (var entry in Scoreboard)
-            {
-                entry.HumanPotentialScore = 0;
-            }
-
-            // "Вимикаємо" всі кнопки, очищуючи потенційні очки
-            // і передаючи хід
+            ResetBoardForNewTurn();
+            // 2. Передаємо хід комп'ютеру
             CurrentTurn = PlayerTurn.Computer;
 
+            // 3. Викликаємо хід ШІ
             bool isGameOver = await PlayComputerTurn();
-            if (isGameOver) 
-                return;
+            if (isGameOver)
+                return; // ШІ виграв миттєво
 
+            // 4. Перевіряємо кінець гри
             if (CurrentRound == TotalRounds)
             {
-                // Це був останній хід. НЕ збільшуємо раунд.
-                // Одразу завершуємо гру.
                 EndGame();
             }
             else
             {
-                
-                // Перехід на настунпий раунд
+                // 5. Починаємо новий раунд
                 CurrentRound++;
-
-                // Повертаємо хід людині
-                CurrentTurn = PlayerTurn.Human;                
+                CurrentTurn = PlayerTurn.Human;
                 RollsLeft = 3;
+                ResetBoardForNewTurn();
             }
         }
 
         private async Task<bool> PlayComputerTurn()
         {
-            // Розблоковуємо усі раніше утримані кубики
-            foreach (var die in Dice)
-            {
-                die.IsLocked = false;
-            }
-
             RollsLeft = 3;
-            bool isFirstRoll = true;
-
-            while (RollsLeft > 0)
+            // Крок 1 і 2: Виконуємо цикл кидків та утримань
+            bool instantWin = await RunComputerRollCycle();
+            if (instantWin)
             {
-                // Пауза та ефект "Blink"
-                await Task.Delay(700); 
-                var diceToRoll = Dice.Where(d => !d.IsLocked).ToList();
-
-                foreach (var die in diceToRoll)
-                {
-                    die.Visibility = Visibility.Hidden;
-                }
-
-                await Task.Delay(150);
-
-                // 1b. Кидок та оновлення UI
-                RollsLeft--; 
-                foreach (var die in diceToRoll)
-                {
-                    die.Value = _random.Next(1, 7);
-                    die.Visibility = Visibility.Visible;
-                }
-
-                var currentDice = Dice.Select(d => d.Value).ToList();
-
-                // Відображення потенційних очок
-                CalculateAllComputerScores(currentDice, isFirstRoll);
-                if (isFirstRoll)
-                {
-                    SetComputerScoringState(true);
-                }
-                await Task.Delay(1000); // Пауза, щоб гравець побачив кидок
-
-                // Перевірка на миттєвий виграш
-                if (isFirstRoll && GameLogic.CheckForInstantWin(currentDice))
-                {
-                    await Task.Delay(1000);
-                    EndGame(PlayerTurn.Computer);
-                    SetComputerScoringState(false);
-                    return true;
-                }                
-
-                // Якщо кидків не залишилось, виходимо з циклу
-                if (RollsLeft == 0)
-                {
-                    break;
-                }
-
-                // Оцінка того чи варто зупинитися
-                await Task.Delay(500);
-                double stopValue = 0;
-                foreach (var entry in Scoreboard.Where(e => !e.ComputerFinalScore.HasValue && e.CategoryName != "Total Score"))
-                {
-                    int score = GameLogic.CalculateScoreForEntry(entry.CategoryName, currentDice, isFirstRoll);
-                    if (score > stopValue) stopValue = score;
-                }
-                
-                // Оцінка комбінації утримання, яка принесе найбільше очок
-                (List<int> holdCombination, double rollValue) = await Task.Run(() =>
-                    GameLogic.FindBestDiceToHold_MonteCarlo(
-                        currentDice, this.Scoreboard, this.CurrentRound, RollsLeft)
-                );
-
-                if (rollValue > stopValue) // Якщо вигідніше кидати далі
-                {                   
-                    
-                    // Утримання кубиків
-                    var tempHoldList = new List<int>(holdCombination);
-                    foreach (var die in Dice)
-                    {
-                        if (tempHoldList.Contains(die.Value))
-                        {
-                            die.IsLocked = true;
-                            tempHoldList.Remove(die.Value);
-                        }
-                        else
-                        {
-                            die.IsLocked = false;
-                        }
-                    }
-
-                    await Task.Delay(700);
-                }
-                else // Якщо кидати не вигідно, то зупиняємось
-                {                    
-                    break;
-                }
-                isFirstRoll = false;
+                return true; // Гра завершена миттєво
             }
 
-            // Запис очок у комірку
-            await Task.Delay(1000);
+            // Крок 3: Робимо фінальний вибір комірки
+            await MakeComputerFinalChoice();
 
-            var finalDice = Dice.Select(d => d.Value).ToList();
-            bool wasFinalRollTheFirstRoll = (RollsLeft == 2);
-
-            // Визначаємо найкращу категорію для записц
-            (ScoreEntry bestEntry, double expectedValue) = await Task.Run(() =>
-                GameLogic.FindBestCategory_MonteCarlo(finalDice, this.Scoreboard, this.CurrentRound, wasFinalRollTheFirstRoll));           
-
-            // Записуємо рахунок
-            if (bestEntry != null)
-            {
-                bestEntry.ComputerPotentialScore = GameLogic.CalculateScoreForEntry(
-                    bestEntry.CategoryName,
-                    finalDice,
-                    wasFinalRollTheFirstRoll
-                );
-
-                bestEntry.ComputerFinalScore = bestEntry.ComputerPotentialScore;
-                UpdateComputerTotalScore();
-            }
-
-            // Прибираємо зелені комірки
-            SetComputerScoringState(false);
-            foreach (var die in Dice)
-            {
-                die.IsLocked = false;
-            }
-            return false;
+            return false; // Гра продовжується
         }
 
         private void CalculateAllComputerScores(List<int> dice, bool isFirstRoll)
@@ -511,6 +379,129 @@ namespace GeneralaGame
             // Вмикаємо кнопку "New Game"
             IsNewGameButtonEnabled = true;
         }
+
+        private async Task<bool> RunComputerRollCycle()
+        {
+            bool isFirstRoll = true;
+
+            while (RollsLeft > 0)
+            {
+                // 1a. Кидок та анімація
+                await Task.Delay(700);
+                var diceToRoll = Dice.Where(d => !d.IsLocked).ToList();
+                foreach (var die in diceToRoll) { die.Visibility = Visibility.Hidden; }
+                await Task.Delay(150);
+                RollsLeft--;
+                foreach (var die in diceToRoll)
+                {
+                    die.Value = _random.Next(1, 7);
+                    die.Visibility = Visibility.Visible;
+                }
+                var currentDice = Dice.Select(d => d.Value).ToList();
+                CalculateAllComputerScores(currentDice, isFirstRoll);
+                if (isFirstRoll) { SetComputerScoringState(true); }
+                await Task.Delay(1000);
+
+                // 1b. Перевірка на миттєвий виграш
+                if (isFirstRoll && GameLogic.CheckForInstantWin(currentDice))
+                {
+                    await Task.Delay(1000);
+                    EndGame(PlayerTurn.Computer);
+                    SetComputerScoringState(false);
+                    return true; // Гра завершена миттєво
+                }
+
+                if (RollsLeft == 0) break; // Кидки закінчилися
+
+                // 1c. "Мозок" Крок 1: Кидати чи ні?
+                await Task.Delay(500);
+                double stopValue = 0;
+                foreach (var entry in Scoreboard.Where(e => !e.ComputerFinalScore.HasValue && e.CategoryName != "Total Score"))
+                {
+                    int score = GameLogic.CalculateScoreForEntry(entry.CategoryName, currentDice, isFirstRoll);
+                    if (score > stopValue) stopValue = score;
+                }
+                (List<int> holdCombination, double rollValue) = await Task.Run(() =>
+                    GameLogic.FindBestDiceToHold_MonteCarlo(
+                        currentDice, this.Scoreboard, this.CurrentRound, RollsLeft)
+                );
+
+                if (rollValue > stopValue)
+                {
+                    // Рішення: Кидати далі
+                    var tempHoldList = new List<int>(holdCombination);
+                    foreach (var die in Dice)
+                    {
+                        if (tempHoldList.Contains(die.Value))
+                        {
+                            die.IsLocked = true;
+                            tempHoldList.Remove(die.Value);
+                        }
+                        else
+                        {
+                            die.IsLocked = false;
+                        }
+                    }
+                    await Task.Delay(700);
+                }
+                else
+                {
+                    // Рішення: Зупинитись
+                    break;
+                }
+                isFirstRoll = false;
+            }
+            return false; // Гра не завершена (просто закінчилися кидки)
+        }
+
+        private async Task MakeComputerFinalChoice()
+        {
+            await Task.Delay(1000); // Фінальні роздуми
+
+            var finalDice = Dice.Select(d => d.Value).ToList();
+            bool wasFinalRollTheFirstRoll = (RollsLeft == 2); // (3 кидки - 1 кидок = 2)
+
+            // Викликаємо "Супер-мозок" (Крок 3)
+            (ScoreEntry bestEntry, double expectedValue) = await Task.Run(() =>
+                GameLogic.FindBestCategory_MonteCarlo(finalDice, this.Scoreboard, this.CurrentRound, wasFinalRollTheFirstRoll));
+
+            // Записуємо рахунок
+            if (bestEntry != null)
+            {
+                bestEntry.ComputerPotentialScore = GameLogic.CalculateScoreForEntry(
+                    bestEntry.CategoryName,
+                    finalDice,
+                    wasFinalRollTheFirstRoll
+                );
+                bestEntry.ComputerFinalScore = bestEntry.ComputerPotentialScore;
+                UpdateComputerTotalScore();
+            }
+
+            // Прибираємо зелені комірки
+            SetComputerScoringState(false);
+        }
+
+        private void ResetBoardForNewTurn()
+        {         
+            // Розблоковуємо всі кубики та очищуємо потенційні очки
+            foreach (var die in Dice)
+            {
+                die.IsLocked = false;
+            }
+
+            // Вимикаємо всі зелені комірки
+            SetScoringState(false);
+            SetComputerScoringState(false);
+
+            // Скидаємо потенційні очки (щоб зникли "0")
+            foreach (var entry in Scoreboard)
+            {
+                entry.HumanPotentialScore = 0;
+                entry.ComputerPotentialScore = 0;
+            }
+        }
+
+
         // --- Керування вікном ---
         private void RulesButton_Click(object sender, RoutedEventArgs e)
         {
@@ -520,15 +511,18 @@ namespace GeneralaGame
         }
         private void NewGameButton_Click(object sender, RoutedEventArgs e)
         {
-            // Скидаємо всі ігрові змінні
+            // 1. Скидаємо стан гри
             CurrentRound = 1;
-            RollsLeft = 3;
             CurrentTurn = PlayerTurn.Human;
             IsNewGameButtonEnabled = false;
+            RollsLeft = 3;
 
-            // Повністю очищуємо та заповнюємо таблицю і кубики
+            // 2. Скидаємо дошку (рахунки, кубики)
             InitializeScoreboard();
             InitializeDice();
+
+            // 3. Скидаємо UI (потенційні очки, RollsLeft)
+            ResetBoardForNewTurn();
         }
 
         private void Minimize_Click(object sender, RoutedEventArgs e)
