@@ -19,24 +19,32 @@
 
         <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
             <TextBlock TextWrapping="Wrap" FontSize="14">
-                1. Мета гри - набрати якомога більше очок за 10 раундів.
+                1. The goal of the game is to score as many points as possible in 10 rounds.
                 <LineBreak/><LineBreak/>
-                2. У кожному раунді у вас є 3 кидки (Rolls).
+                2. In each round you have 3 rolls.
                 <LineBreak/><LineBreak/>
-                3. Після першого кидка ви можете "заблокувати" будь-яку 
-                   кількість кубиків, натиснувши на них.
+                3. After the first roll, you can "lock" any 
+                    number of dice by clicking on them.
                 <LineBreak/><LineBreak/>
-                4. Наступні кидки будуть стосуватися лише незаблокованих 
-                   кубиків.
+                4. Subsequent rolls will only apply to unblocked 
+                   dice.
                 <LineBreak/><LineBreak/>
-                5. Після трьох кидків (або раніше) ви повинні обрати одну 
-                   з категорій у таблиці, щоб записати туди свій результат.
+                5. After three throws (or sooner), you must choose one of the categories in 
+                the table to record your result there.
                 <LineBreak/><LineBreak/>
-                6. Кожну категорію можна використати лише ОДИН РАЗ за гру.
+                6. Each category can only be used ONCE per game.
+                 <LineBreak/><LineBreak/>
+                7. Scoring categories include: 
+                Ones, Twos, Threes, Fours, Fives, Sixes, 
+                   Straight, Full House, Four of a Kind, 
+                   Generala. For detailed scoring rules, please refer to the game instructions.
+                 <LineBreak/><LineBreak/>
+                8. The game ends after 10 rounds, and the player with the highest score wins OR wins the player who got Generala at the very first roll.
+                 <LineBreak/><LineBreak/>                 
             </TextBlock>
         </ScrollViewer>
 
-        <Button Grid.Row="1" Content="Зрозуміло" 
+        <Button Grid.Row="1" Content="Understood" 
                 Width="120" Padding="8,5" 
                 Margin="0,15,0,0" 
                 HorizontalAlignment="Center"

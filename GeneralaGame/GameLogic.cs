@@ -69,16 +69,14 @@ namespace GeneralaGame
             return 0;
         }
 
-        // --- ДОПОМІЖНИЙ МЕТОД ---
-
-        // Цей метод перевіряє, чи є 5 однакових кубиків
-        // (потрібен для миттєвої перемоги)
+        
+        // Метод для перевірки миттєвої перемоги
         public static bool CheckForInstantWin(List<int> dice)
         {
             return GetDiceCounts(dice).Any(g => g.Count == 5);
         }
 
-        // Приватний метод, що групує кубики
+        // Приватний метод, що групує кубики за їх кількістю
         // Наприклад: [1, 1, 3, 3, 3] -> [ (1, 2), (3, 3) ]
         private static List<(int Value, int Count)> GetDiceCounts(List<int> dice)
         {
@@ -94,6 +92,7 @@ namespace GeneralaGame
         // Окремий Random для симуляцій, щоб не впливати на кидки у UI
         private static Random _simRandom = new Random();
 
+        // Метод для визначення найкращих варіантів утримання кубиків
         public static (List<int> diceToHold, double expectedValue) FindBestDiceToHold_MonteCarlo(
              List<int> currentDice,
              ObservableCollection<ScoreEntry> currentBoard,
@@ -130,15 +129,16 @@ namespace GeneralaGame
                     {
                         finalSimDice.Add(_simRandom.Next(1, 7));
                     }
-
-                    // --- ▼▼▼ ЗМІНА ▼▼▼ ---
-                    // "Жадібна" логіка винесена у новий метод
+                   
+                    // Жадібна оцінка найкращого варіанту
                     totalSimScore += FindBestGreedyScore(finalSimDice, currentBoard, false);
-                    // --- ▲▲▲ КІНЕЦЬ ЗМІНИ ▲▲▲ ---
+                   
                 }
 
+                // Середнє значення очок
                 double averageScore = totalSimScore / MONTE_CARLO_ROLL_ITERATIONS;
 
+                // Якщо нова оцінка краща за існуючу
                 if (averageScore > bestAverageScore)
                 {
                     bestAverageScore = averageScore;
@@ -149,6 +149,7 @@ namespace GeneralaGame
             return (bestHoldCombination, bestAverageScore);
         }
 
+        // Вибір найкращої категорії
         public static (ScoreEntry bestEntry, double expectedValue) FindBestCategory_MonteCarlo(
             List<int> finalDice,
             ObservableCollection<ScoreEntry> currentBoard,
@@ -161,7 +162,7 @@ namespace GeneralaGame
             var availableEntries = currentBoard.Where(e => !e.ComputerFinalScore.HasValue
                                                     && e.CategoryName != "Total Score");
 
-            // --- ОНОВЛЕНО (обробка, якщо ходів немає) ---
+            // Якщо ходів немає
             if (!availableEntries.Any())
             {
                 // Повертаємо "немає ходу" і "найгірший рахунок"
@@ -192,7 +193,7 @@ namespace GeneralaGame
                 }
             }
 
-            // --- ОНОВЛЕНО (повертаємо і комірку, і її цінність) ---
+            // Повертаємо комірку і її цінність
             return (bestEntry, bestAverageScore);
         }
 
@@ -200,30 +201,28 @@ namespace GeneralaGame
         {
             for (int round = startRound; round <= 10; round++)
             {
-                // 1. Кидаємо кубики
+                // Кидаємо кубики
                 List<int> simDice = new List<int>();
                 for (int i = 0; i < 5; i++) simDice.Add(_simRandom.Next(1, 7));
 
-                // 2. "Жадібно" обираємо найкращий хід з вільних
+                // "Жадібно" обираємо найкращий хід з вільних
                 var available = board.Where(e => !e.ComputerFinalScore.HasValue && e.CategoryName != "Total Score");
-                if (!available.Any()) break;
+                if (!available.Any())
+                    break;
 
-                // --- ▼▼▼ ЗМІНА ▼▼▼ ---
-                // Використовуємо новий хелпер
+                // Знаходимо найкращий рахунок
                 int maxScore = FindBestGreedyScore(simDice, board, true);
 
-                // Знаходимо комірку, яка дає цей рахунок
-                // (це не ідеально, але для симуляції достатньо)
+                // Знаходимо комірку, яка дає цей рахунок                
                 var bestSimEntry = available.FirstOrDefault(e => CalculateScoreForEntry(e.CategoryName, simDice, true) == maxScore);
                 if (bestSimEntry == null) // Якщо всі дають 0, беремо першу вільну
-                    bestSimEntry = available.First();
-                // --- ▲▲▲ КІНЕЦЬ ЗМІНИ ▲▲▲ ---
+                    bestSimEntry = available.First();               
 
-                // 3. Записуємо його
+                // Записуємо рахунок в комірку
                 bestSimEntry.ComputerFinalScore = maxScore;
             }
 
-            // 4. Повертаємо фінальний "Total Score"
+            // Повертаємо фінальний "Total Score"
             int total = board.Where(e => e.CategoryName != "Total Score").Sum(e => e.ComputerFinalScore ?? 0);
             return total;
         }

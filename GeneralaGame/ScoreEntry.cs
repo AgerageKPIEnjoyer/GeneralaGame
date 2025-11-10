@@ -11,15 +11,16 @@ namespace GeneralaGame
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
-        // Назва категорії (Ones, Twos...)
+        // Назва категорії 
         public string CategoryName { get; set; }
 
-        // --- Властивості для гравця (You) ---
+        // Властивості для гравця-людини
         private int? _humanFinalScore; // Збережений рахунок (nullable)
         public int? HumanFinalScore
         {
             get => _humanFinalScore;
-            set {
+            set 
+            {
                 _humanFinalScore = value; 
                 OnPropertyChanged(); 
                 OnPropertyChanged(nameof(HumanDisplayScore));
@@ -31,7 +32,12 @@ namespace GeneralaGame
         public int HumanPotentialScore
         {
             get => _humanPotentialScore;
-            set { _humanPotentialScore = value; OnPropertyChanged(); OnPropertyChanged(nameof(HumanDisplayScore)); }
+            set 
+            { 
+                _humanPotentialScore = value;
+                OnPropertyChanged(); 
+                OnPropertyChanged(nameof(HumanDisplayScore));
+            }
         }
 
         private bool _isScoringEnabled = false;
@@ -45,9 +51,9 @@ namespace GeneralaGame
             }
         }
 
-        // "Розумна" властивість, яку бачить UI (кнопка).
-        // Показує фінальний рахунок, ЯКЩО він є.
-        // Інакше показує потенційний рахунок (якщо він > 0).
+       
+        // Показує фінальний рахунок, якщо він є.
+        // Інакше показує потенційний рахунок
         public string HumanDisplayScore
         {
             get
@@ -66,11 +72,9 @@ namespace GeneralaGame
             }
         }      
        
+        // Властивість для запису значення в комірку
         public bool IsHumanScorable
-        {
-            // Кнопка активна, ТІЛЬКИ ЯКЩО:
-            // 1. Рахунок ще не записаний
-            // 2. MainWindow ("мозок" гри) дозволив вибір
+        {            
             get => !HumanFinalScore.HasValue && IsScoringEnabled;
         }
 
@@ -99,7 +103,7 @@ namespace GeneralaGame
             }
         }
 
-        // НОВА ВЛАСТИВІСТЬ: Вмикає/вимикає зелений колір
+        // Показує досутпні комірки для комп'ютера
         private bool _isComputerScoringEnabled = false;
         public bool IsComputerScoringEnabled
         {
@@ -112,25 +116,27 @@ namespace GeneralaGame
             }
         }
 
-        // НОВА ВЛАСТИВІСТЬ: Контролює стиль кнопки
+        // Контролює стиль кнопки
         public bool IsComputerScorable => !ComputerFinalScore.HasValue && IsComputerScoringEnabled;
 
-        // ОНОВЛЕНА ВЛАСТИВІСТЬ: Показує потенційний рахунок або фінальний
+        //  Показує потенційний рахунок або фінальний рахунок для комп'ютера
         public string ComputerDisplayScore
         {
             get
             {
-                if (ComputerFinalScore.HasValue) return ComputerFinalScore.Value.ToString();
-                // Показуємо потенційний рахунок, якщо ШІ "думає"
-                if (IsComputerScoringEnabled) return ComputerPotentialScore.ToString();
+                if (ComputerFinalScore.HasValue) 
+                    return ComputerFinalScore.Value.ToString();
+
+                // Показуємо потенційний рахунок, якщо комп'ютер "думає"
+                if (IsComputerScoringEnabled)
+                    return ComputerPotentialScore.ToString();
+
                 return "";
             }
         }
 
         public ScoreEntry Clone()
-        {
-            // MemberwiseClone створює копію. 
-            // Це ідеально для нашої симуляції.
+        {            
             return this.MemberwiseClone() as ScoreEntry;
         }
     }

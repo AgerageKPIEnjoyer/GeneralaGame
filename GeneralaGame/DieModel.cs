@@ -20,11 +20,10 @@ namespace GeneralaGame
             {
                 _value = value;
                 OnPropertyChanged(); // Повідомити UI
-                OnPropertyChanged(nameof(ImagePath)); // Оновити оновити картинку!
+                OnPropertyChanged(nameof(ImagePath)); // Оновити зображенн кубика
             }
         }
-
-        // 3. Властивість для СТАНУ кубика (заблокований/ні)
+        // Властивість для стану кубика (заблокований/ні)
         private bool _isLocked = false;
         public bool IsLocked
         {
@@ -33,12 +32,11 @@ namespace GeneralaGame
             {
                 _isLocked = value;
                 OnPropertyChanged(); // Повідомити UI
-                OnPropertyChanged(nameof(ImagePath)); // ТАКОЖ оновити картинку!
+                OnPropertyChanged(nameof(ImagePath)); // Оновити картинку
             }
         }
 
-        // 4. "Розумна" властивість, що сама обирає правильну картинку
-        //    UI буде прив'язаний саме до неї.
+        //Властивість, що сама обирає правильну картинку (для кубиків)     
         public string ImagePath
         {
             get
